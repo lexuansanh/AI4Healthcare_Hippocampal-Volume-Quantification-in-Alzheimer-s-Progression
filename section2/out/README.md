@@ -14,3 +14,4 @@ Please put the artefacts from Section 2 here:
 * In our dataset we have labels of 2 classes - anterior and posterior segments of the hippocampus. Can you train a version of model that segments the structure as a whole, only using one class? Is the performance better, the same or worse?
 * Write up a short report explaining requirements for your training process (compute, memory) and suggestions for making it more efficient (model architecture, data pipeline, loss functions, data augmentation). What kind of data augmentations would NOT add value?
 * What are best and worst performing volumes? Why do you think that's the case?
+http://058bfe815e6ce1f45743284fdaa5a0ebd2a44d1b-6687cc5469-tt9c5:6006/
