@@ -206,9 +206,10 @@ def save_report_as_dcm(header, report, path):
     out.BurnedInAnnotation = "YES"
 
     out.PixelData = report.tobytes()
-
+    
     pydicom.filewriter.dcmwrite(path, out, write_like_original=False)
-
+    print(f"DONE SAVE TO {path}")
+    
 def get_series_for_inference(path):
     """Reads multiple series from one folder and picks the one
     to run inference on.
@@ -219,11 +220,15 @@ def get_series_for_inference(path):
     Returns:
         Numpy array representing the series
     """
+    print(path)
 
     # Here we are assuming that path is a directory that contains a full study as a collection
     # of files
     # We are reading all files into a list of PyDicom objects so that we can filter them later
-    dicoms = [pydicom.dcmread(os.path.join(path, f)) for f in os.listdir(path)]
+    dicoms = []
+    for _ , subdirs, _ in os.walk(path):
+        for subdir in subdirs:
+            dicoms.extend([pydicom.dcmread(os.path.join(path, subdir, f)) for f in os.listdir(os.path.join(path, subdir))])
 
     # TASK: create a series_for_inference variable that will contain a list of only 
     # those PyDicom objects that represent files that belong to the series that you 
@@ -237,12 +242,11 @@ def get_series_for_inference(path):
     # Hint: inspect the metadata of HippoCrop series
 
     series_for_inference = [dicom for dicom in dicoms if dicom.SeriesDescription == "HippoCrop"]
-
+    print(series_for_inference)
     # Check if there are more than one series (using set comprehension).
     if len({f.SeriesInstanceUID for f in series_for_inference}) != 1:
         print("Error: can not figure out what series to run inference on")
         return []
-
     return series_for_inference
 
 def os_command(command):
@@ -278,7 +282,7 @@ if __name__ == "__main__":
     # TASK: Use the UNetInferenceAgent class and model parameter file from the previous section
     inference_agent = UNetInferenceAgent(
         device="cpu",
-        parameter_file_path=r"./out/model.pth")
+        parameter_file_path=r"../out/model.pth")
 
     # Run inference
     # TASK: single_volume_inference_unpadded takes a volume of arbitrary size 
@@ -301,14 +305,14 @@ if __name__ == "__main__":
     # TASK: Write a command line string that will issue a DICOM C-STORE request to send our report
     # to our Orthanc server (that runs on port 4242 of the local machine), using storescu tool
     os_command("storescu localhost 4242 -v -aec HIPPOAI +r +sd ../out/report.dcm")
-
+    print("os_command storescu")
     # This line will remove the study dir if run as root user
     # Sleep to let our StoreSCP server process the report (remember - in our setup
     # the main archive is routing everyting that is sent to it, including our freshly generated
     # report) - we want to give it time to save before cleaning it up
     time.sleep(2)
-    shutil.rmtree(study_dir, onerror=lambda f, p, e: print(f"Error deleting: {e[1]}"))
-
+#     shutil.rmtree(study_dir, onerror=lambda f, p, e: print(f"Error deleting: {e[1]}"))
+    print("shutil.rmtree")
     print(f"Inference successful on {header['SOPInstanceUID'].value}, out: {pred_label.shape}",
           f"volume ant: {pred_volumes['anterior']}, ",
           f"volume post: {pred_volumes['posterior']}, total volume: {pred_volumes['total']}")
